@@ -189,11 +189,53 @@
       font-weight: bold;
       cursor: pointer;
       font-size: 18px;
-      transition: transform 0.15s ease;
+      transition: all 0.15s ease;
+      position: relative;
     }
 
-    .choice:hover {
+    .choice:hover:not(:disabled) {
       transform: translateY(-2px);
+    }
+
+    .choice:disabled {
+      cursor: not-allowed;
+    }
+
+    .choice.correct {
+      animation: correctPulse 0.6s ease;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), inset 0 0 20px rgba(34, 197, 94, 0.5);
+    }
+
+    .choice.wrong {
+      animation: wrongShake 0.4s ease;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), inset 0 0 20px rgba(239, 68, 68, 0.5);
+    }
+
+    @keyframes correctPulse {
+      0% {
+        box-shadow: 0 0 0 rgba(34, 197, 94, 0.8);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(34, 197, 94, 0.8);
+        transform: scale(1.05);
+      }
+      100% {
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), inset 0 0 20px rgba(34, 197, 94, 0.5);
+        transform: scale(1);
+      }
+    }
+
+    @keyframes wrongShake {
+      0%, 100% {
+        transform: translateX(0) scale(1);
+      }
+      25% {
+        transform: translateX(-8px) scale(0.98);
+      }
+      75% {
+        transform: translateX(8px) scale(0.98);
+      }
     }
 
     .footer {
@@ -218,6 +260,11 @@
     .flash.wrong {
       background: rgba(239,68,68,0.3);
       opacity: 1;
+    }
+
+    .round-indicator {
+      font-size: 12px;
+      opacity: 0.7;
     }
 
     @media (min-width: 900px) {
@@ -265,7 +312,10 @@
         <h2 style="margin-bottom:12px;">Colour Confusion Tutorial</h2>
         <p>
           Tap the button that matches the TEXT COLOUR — not the written word.
-          The faster you answer, the higher your score.
+          <br><br>
+          Complete 5 rounds to reach 100 points.
+          <br>
+          20 points per correct answer!
         </p>
       </div>
 
@@ -278,11 +328,11 @@
 
       <div class="topbar">
         <div class="badge">
-          Score: <span id="score">0</span>
+          Score: <span id="score">0</span>/100
         </div>
 
         <div class="badge">
-          Time: <span id="timer">30</span>s
+          <span id="roundIndicator" class="round-indicator">Round: 1/5</span>
         </div>
       </div>
 
@@ -326,7 +376,7 @@
     const wordDisplay = document.getElementById('wordDisplay');
     const choicesContainer = document.getElementById('choices');
     const scoreDisplay = document.getElementById('score');
-    const timerDisplay = document.getElementById('timer');
+    const roundIndicator = document.getElementById('roundIndicator');
     const flash = document.getElementById('flash');
 
     const intro = document.getElementById('intro');
@@ -335,12 +385,15 @@
 
     let currentAnswer = '';
     let score = 0;
-    let time = 30;
-    let timer;
+    let round = 1;
+    const MAX_ROUNDS = 5;
+    const POINTS_PER_ROUND = 20;
+    const MAX_SCORE = 100;
+    let gameActive = true;
 
     playTutorial.addEventListener('click', () => {
       alert(
-        'Tutorial:\n\nSelect the colour of the TEXT itself.\nIgnore the written word.\n\nExample:\nIf the word says RED but appears in blue colour, the correct answer is BLUE.'
+        'Tutorial:\n\nSelect the colour of the TEXT itself.\nIgnore the written word.\n\nExample:\nIf the word says RED but appears in blue colour, the correct answer is BLUE.\n\n5 Rounds × 20 Points = 100 Points Total'
       );
     });
 
@@ -351,28 +404,19 @@
 
     function startGame() {
       score = 0;
-      time = 30;
+      round = 1;
+      gameActive = true;
       updateScore();
-      timerDisplay.textContent = time;
-
+      updateRound();
       nextRound();
-
-      clearInterval(timer);
-      timer = setInterval(() => {
-        time--;
-        timerDisplay.textContent = time;
-
-        if (time <= 0) {
-          clearInterval(timer);
-          setTimeout(() => {
-            alert(`Game Over! Your score: ${score}`);
-            intro.classList.remove('hidden');
-          }, 200);
-        }
-      }, 1000);
     }
 
     function nextRound() {
+      if (round > MAX_ROUNDS || score >= MAX_SCORE) {
+        endGame();
+        return;
+      }
+
       choicesContainer.innerHTML = '';
 
       const randomWord = colors[Math.floor(Math.random() * colors.length)];
@@ -392,7 +436,7 @@
         btn.style.background = item.value;
 
         btn.addEventListener('click', () => {
-          checkAnswer(item.name);
+          checkAnswer(item.name, btn);
         });
 
         choicesContainer.appendChild(btn);
@@ -411,21 +455,54 @@
       }
     }
 
-    function checkAnswer(answer) {
+    function checkAnswer(answer, buttonElement) {
+      if (!gameActive) return;
+
+      gameActive = false;
+
+      // Disable all buttons
+      const allButtons = choicesContainer.querySelectorAll('.choice');
+      allButtons.forEach(btn => btn.disabled = true);
+
       if (answer === currentAnswer) {
-        score++;
+        score += POINTS_PER_ROUND;
+        buttonElement.classList.add('correct');
         flashScreen('correct');
       } else {
-        score = Math.max(0, score - 1);
+        buttonElement.classList.add('wrong');
         flashScreen('wrong');
+        
+        // Show correct answer
+        const correctButton = [...allButtons].find(btn => btn.textContent === currentAnswer);
+        if (correctButton) {
+          correctButton.classList.add('correct');
+        }
       }
 
       updateScore();
-      nextRound();
+
+      setTimeout(() => {
+        round++;
+        updateRound();
+        gameActive = true;
+        nextRound();
+      }, 800);
+    }
+
+    function endGame() {
+      gameActive = false;
+      setTimeout(() => {
+        alert(`Game Complete! Your Final Score: ${score}/${MAX_SCORE}`);
+        intro.classList.remove('hidden');
+      }, 200);
     }
 
     function updateScore() {
       scoreDisplay.textContent = score;
+    }
+
+    function updateRound() {
+      roundIndicator.textContent = `Round: ${Math.min(round, MAX_ROUNDS + 1)}/${MAX_ROUNDS}`;
     }
 
     function flashScreen(type) {
@@ -433,7 +510,7 @@
 
       setTimeout(() => {
         flash.className = 'flash';
-      }, 180);
+      }, 300);
     }
   </script>
 
