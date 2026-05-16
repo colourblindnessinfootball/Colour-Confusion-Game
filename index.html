@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Colour Confusion Game</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: white;
+      padding: 20px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 430px;
+      aspect-ratio: 9 / 16;
+      background: linear-gradient(180deg, #111827, #1e293b);
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      border: 2px solid rgba(255,255,255,0.08);
+    }
+
+    .video-intro {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      transition: 0.4s ease;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .video-intro.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .demo-video {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 24px;
+      background: linear-gradient(135deg,#3b82f6,#8b5cf6);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .play-button {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .play-button:hover {
+      transform: scale(1.05);
+    }
+
+    .play-button::before {
+      content: "";
+      border-left: 28px solid white;
+      border-top: 18px solid transparent;
+      border-bottom: 18px solid transparent;
+      margin-left: 6px;
+    }
+
+    .tutorial-text {
+      font-size: 15px;
+      line-height: 1.7;
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+
+    .start-btn {
+      padding: 14px 24px;
+      border-radius: 999px;
+      border: none;
+      background: white;
+      color: #111827;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .game {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 22px;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge {
+      background: rgba(255,255,255,0.08);
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+
+    .title {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .title h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    .title p {
+      font-size: 15px;
+      opacity: 0.8;
+      line-height: 1.6;
+    }
+
+    .challenge-box {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border-radius: 26px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .word {
+      font-size: 54px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .instruction {
+      font-size: 16px;
+      opacity: 0.85;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(2,1fr);
+      gap: 14px;
+      width: 100%;
+    }
+
+    .choice {
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 18px;
+      transition: transform 0.15s ease;
+    }
+
+    .choice:hover {
+      transform: translateY(-2px);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: 0.3s ease;
+    }
+
+    .flash.correct {
+      background: rgba(34,197,94,0.3);
+      opacity: 1;
+    }
+
+    .flash.wrong {
+      background: rgba(239,68,68,0.3);
+      opacity: 1;
+    }
+
+    @media (min-width: 900px) {
+      body {
+        padding: 40px;
+      }
+
+      .app-shell {
+        max-width: 520px;
+      }
+
+      .title h1 {
+        font-size: 40px;
+      }
+
+      .word {
+        font-size: 70px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .word {
+        font-size: 46px;
+      }
+
+      .choice {
+        font-size: 16px;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="flash" id="flash"></div>
+
+    <div class="video-intro" id="intro">
+      <div class="demo-video">
+        <div class="play-button" id="playTutorial"></div>
+      </div>
+
+      <div class="tutorial-text">
+        <h2 style="margin-bottom:12px;">Colour Confusion Tutorial</h2>
+        <p>
+          Tap the button that matches the TEXT COLOUR — not the written word.
+          The faster you answer, the higher your score.
+        </p>
+      </div>
+
+      <button class="start-btn" id="startGameBtn">
+        Start Game
+      </button>
+    </div>
+
+    <div class="game">
+
+      <div class="topbar">
+        <div class="badge">
+          Score: <span id="score">0</span>
+        </div>
+
+        <div class="badge">
+          Time: <span id="timer">30</span>s
+        </div>
+      </div>
+
+      <div class="title">
+        <h1>Colour Confusion</h1>
+        <p>
+          Ignore the word meaning. Match the text colour.
+        </p>
+      </div>
+
+      <div class="challenge-box">
+
+        <div class="instruction">
+          Which colour is the text displayed in?
+        </div>
+
+        <div class="word" id="wordDisplay">
+          BLUE
+        </div>
+
+        <div class="choices" id="choices"></div>
+      </div>
+
+      <div class="footer">
+        Responsive 9:16 mobile & desktop friendly game demo
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const colors = [
+      { name: 'RED', value: '#ef4444' },
+      { name: 'BLUE', value: '#3b82f6' },
+      { name: 'GREEN', value: '#22c55e' },
+      { name: 'YELLOW', value: '#eab308' },
+      { name: 'PURPLE', value: '#a855f7' },
+      { name: 'ORANGE', value: '#f97316' }
+    ];
+
+    const wordDisplay = document.getElementById('wordDisplay');
+    const choicesContainer = document.getElementById('choices');
+    const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
+    const flash = document.getElementById('flash');
+
+    const intro = document.getElementById('intro');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const playTutorial = document.getElementById('playTutorial');
+
+    let currentAnswer = '';
+    let score = 0;
+    let time = 30;
+    let timer;
+
+    playTutorial.addEventListener('click', () => {
+      alert(
+        'Tutorial:\n\nSelect the colour of the TEXT itself.\nIgnore the written word.\n\nExample:\nIf the word says RED but appears in blue colour, the correct answer is BLUE.'
+      );
+    });
+
+    startGameBtn.addEventListener('click', () => {
+      intro.classList.add('hidden');
+      startGame();
+    });
+
+    function startGame() {
+      score = 0;
+      time = 30;
+      updateScore();
+      timerDisplay.textContent = time;
+
+      nextRound();
+
+      clearInterval(timer);
+      timer = setInterval(() => {
+        time--;
+        timerDisplay.textContent = time;
+
+        if (time <= 0) {
+          clearInterval(timer);
+          setTimeout(() => {
+            alert(`Game Over! Your score: ${score}`);
+            intro.classList.remove('hidden');
+          }, 200);
+        }
+      }, 1000);
+    }
+
+    function nextRound() {
+      choicesContainer.innerHTML = '';
+
+      const randomWord = colors[Math.floor(Math.random() * colors.length)];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+      wordDisplay.textContent = randomWord.name;
+      wordDisplay.style.color = randomColor.value;
+
+      currentAnswer = randomColor.name;
+
+      const shuffled = [...colors].sort(() => Math.random() - 0.5);
+
+      shuffled.slice(0, 4).forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = item.name;
+        btn.style.background = item.value;
+
+        btn.addEventListener('click', () => {
+          checkAnswer(item.name);
+        });
+
+        choicesContainer.appendChild(btn);
+      });
+
+      const exists = [...choicesContainer.children].some(
+        btn => btn.textContent === currentAnswer
+      );
+
+      if (!exists) {
+        const randomIndex = Math.floor(Math.random() * 4);
+        choicesContainer.children[randomIndex].textContent = currentAnswer;
+
+        const correctColor = colors.find(c => c.name === currentAnswer);
+        choicesContainer.children[randomIndex].style.background = correctColor.value;
+      }
+    }
+
+    function checkAnswer(answer) {
+      if (answer === currentAnswer) {
+        score++;
+        flashScreen('correct');
+      } else {
+        score = Math.max(0, score - 1);
+        flashScreen('wrong');
+      }
+
+      updateScore();
+      nextRound();
+    }
+
+    function updateScore() {
+      scoreDisplay.textContent = score;
+    }
+
+    function flashScreen(type) {
+      flash.className = `flash ${type}`;
+
+      setTimeout(() => {
+        flash.className = 'flash';
+      }, 180);
+    }
+  </script>
+
+</body>
+</html>
