@@ -387,11 +387,9 @@
       <div class="tutorial-text">
         <h2 style="margin-bottom:12px;">Colour Confusion Tutorial</h2>
         <p>
-          Tap the button that matches the TEXT COLOUR — not the written word.
+          Press PLAY to watch an automated demo.
           <br><br>
-          Complete 5 rounds to reach 100 points.
-          <br>
-          20 points per correct answer!
+          Then press START GAME to play for real!
         </p>
       </div>
 
@@ -465,16 +463,26 @@
     const POINTS_PER_ROUND = 20;
     const MAX_SCORE = 100;
     let gameActive = true;
+    let isDemo = false;
 
     playTutorial.addEventListener('click', () => {
-      alert(
-        'Tutorial:\n\nSelect the colour of the TEXT itself.\nIgnore the written word.\n\nExample:\nIf the word says RED but appears in blue colour, the correct answer is BLUE.\n\n5 Rounds × 20 Points = 100 Points Total'
-      );
+      startDemo();
     });
 
     startGameBtn.addEventListener('click', () => {
       startCountdown();
     });
+
+    function startDemo() {
+      isDemo = true;
+      score = 0;
+      round = 1;
+      gameActive = true;
+      updateScore();
+      updateRound();
+      intro.classList.add('hidden');
+      nextRound();
+    }
 
     function startCountdown() {
       countdownOverlay.classList.add('active');
@@ -488,6 +496,7 @@
           clearInterval(countdownInterval);
           countdownOverlay.classList.remove('active');
           intro.classList.add('hidden');
+          isDemo = false;
           startGame();
         }
       }, 1000);
@@ -544,10 +553,48 @@
         const correctColor = colors.find(c => c.name === currentAnswer);
         choicesContainer.children[randomIndex].style.background = correctColor.value;
       }
+
+      // Auto-play demo
+      if (isDemo) {
+        disableAllButtons();
+        setTimeout(() => {
+          const correctButton = [...choicesContainer.querySelectorAll('.choice')].find(
+            btn => btn.textContent === currentAnswer
+          );
+          if (correctButton) {
+            autoClickButton(correctButton);
+          }
+        }, 1500);
+      }
+    }
+
+    function disableAllButtons() {
+      choicesContainer.querySelectorAll('.choice').forEach(btn => btn.disabled = true);
+    }
+
+    function enableAllButtons() {
+      choicesContainer.querySelectorAll('.choice').forEach(btn => btn.disabled = false);
+    }
+
+    function autoClickButton(buttonElement) {
+      const allButtons = choicesContainer.querySelectorAll('.choice');
+      allButtons.forEach(btn => btn.disabled = true);
+
+      score += POINTS_PER_ROUND;
+      buttonElement.classList.add('correct');
+      flashScreen('correct');
+
+      updateScore();
+
+      setTimeout(() => {
+        round++;
+        updateRound();
+        nextRound();
+      }, 800);
     }
 
     function checkAnswer(answer, buttonElement) {
-      if (!gameActive) return;
+      if (!gameActive || isDemo) return;
 
       gameActive = false;
 
@@ -583,8 +630,14 @@
     function endGame() {
       gameActive = false;
       setTimeout(() => {
-        alert(`Game Complete! Your Final Score: ${score}/${MAX_SCORE}`);
-        intro.classList.remove('hidden');
+        if (isDemo) {
+          alert(`Demo Complete! Now try the real game.`);
+          intro.classList.remove('hidden');
+          isDemo = false;
+        } else {
+          alert(`Game Complete! Your Final Score: ${score}/${MAX_SCORE}`);
+          intro.classList.remove('hidden');
+        }
       }, 200);
     }
 
