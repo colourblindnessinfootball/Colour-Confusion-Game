@@ -112,6 +112,45 @@
       font-size: 16px;
     }
 
+    .countdown-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s ease;
+    }
+
+    .countdown-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .countdown-number {
+      font-size: 120px;
+      font-weight: bold;
+      color: #3b82f6;
+      animation: countdownPulse 1s ease;
+    }
+
+    @keyframes countdownPulse {
+      0% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+    }
+
     .game {
       height: 100%;
       display: flex;
@@ -124,13 +163,40 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
 
     .badge {
       background: rgba(255,255,255,0.08);
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 14px;
-      font-size: 14px;
+      font-size: 13px;
+      flex: 1;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .score-badge {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      min-width: 100px;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .score-value {
+      font-size: 28px;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .score-label {
+      font-size: 12px;
+      opacity: 0.9;
     }
 
     .title {
@@ -238,12 +304,6 @@
       }
     }
 
-    .footer {
-      text-align: center;
-      font-size: 13px;
-      opacity: 0.7;
-    }
-
     .flash {
       position: absolute;
       inset: 0;
@@ -283,6 +343,14 @@
       .word {
         font-size: 70px;
       }
+
+      .score-badge {
+        min-width: 120px;
+      }
+
+      .score-value {
+        font-size: 32px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -294,6 +362,10 @@
         font-size: 16px;
         padding: 16px;
       }
+
+      .score-value {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
@@ -302,6 +374,10 @@
   <div class="app-shell">
 
     <div class="flash" id="flash"></div>
+
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="countdown-number" id="countdownNumber">3</div>
+    </div>
 
     <div class="video-intro" id="intro">
       <div class="demo-video">
@@ -328,11 +404,12 @@
 
       <div class="topbar">
         <div class="badge">
-          Score: <span id="score">0</span>/100
+          <span id="roundIndicator" class="round-indicator">Round: 1/5</span>
         </div>
 
-        <div class="badge">
-          <span id="roundIndicator" class="round-indicator">Round: 1/5</span>
+        <div class="score-badge">
+          <span class="score-value" id="score">0</span>
+          <span class="score-label">/100 Pts</span>
         </div>
       </div>
 
@@ -354,10 +431,6 @@
         </div>
 
         <div class="choices" id="choices"></div>
-      </div>
-
-      <div class="footer">
-        Responsive 9:16 mobile & desktop friendly game demo
       </div>
 
     </div>
@@ -382,6 +455,8 @@
     const intro = document.getElementById('intro');
     const startGameBtn = document.getElementById('startGameBtn');
     const playTutorial = document.getElementById('playTutorial');
+    const countdownOverlay = document.getElementById('countdownOverlay');
+    const countdownNumber = document.getElementById('countdownNumber');
 
     let currentAnswer = '';
     let score = 0;
@@ -398,9 +473,25 @@
     });
 
     startGameBtn.addEventListener('click', () => {
-      intro.classList.add('hidden');
-      startGame();
+      startCountdown();
     });
+
+    function startCountdown() {
+      countdownOverlay.classList.add('active');
+      let count = 3;
+
+      const countdownInterval = setInterval(() => {
+        countdownNumber.textContent = count;
+        count--;
+
+        if (count < 0) {
+          clearInterval(countdownInterval);
+          countdownOverlay.classList.remove('active');
+          intro.classList.add('hidden');
+          startGame();
+        }
+      }, 1000);
+    }
 
     function startGame() {
       score = 0;
