@@ -339,6 +339,72 @@
       z-index: 35;
     }
 
+    .demo-complete-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.4s ease;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .demo-complete-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .demo-complete-score {
+      font-size: 72px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      animation: scorePopIn 0.6s ease;
+    }
+
+    @keyframes scorePopIn {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .demo-complete-text {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .demo-complete-button {
+      padding: 14px 28px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .demo-complete-button:hover {
+      transform: scale(1.05);
+    }
+
     @media (min-width: 900px) {
       body {
         padding: 40px;
@@ -363,6 +429,14 @@
       .score-value {
         font-size: 32px;
       }
+
+      .demo-complete-score {
+        font-size: 96px;
+      }
+
+      .demo-complete-text {
+        font-size: 28px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -378,6 +452,14 @@
       .score-value {
         font-size: 24px;
       }
+
+      .demo-complete-score {
+        font-size: 56px;
+      }
+
+      .demo-complete-text {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
@@ -391,6 +473,12 @@
 
     <div class="countdown-overlay" id="countdownOverlay">
       <div class="countdown-number" id="countdownNumber">3</div>
+    </div>
+
+    <div class="demo-complete-overlay" id="demoCompleteOverlay">
+      <div class="demo-complete-score" id="demoCompleteScore">100</div>
+      <div class="demo-complete-text">What score did you get?</div>
+      <button class="demo-complete-button" id="demoCompleteButton">Try It Out!</button>
     </div>
 
     <div class="video-intro" id="intro">
@@ -470,6 +558,9 @@
     const countdownOverlay = document.getElementById('countdownOverlay');
     const countdownNumber = document.getElementById('countdownNumber');
     const demoLabel = document.getElementById('demoLabel');
+    const demoCompleteOverlay = document.getElementById('demoCompleteOverlay');
+    const demoCompleteScore = document.getElementById('demoCompleteScore');
+    const demoCompleteButton = document.getElementById('demoCompleteButton');
 
     let currentAnswer = '';
     let score = 0;
@@ -487,6 +578,13 @@
 
     startGameBtn.addEventListener('click', () => {
       startCountdown();
+    });
+
+    demoCompleteButton.addEventListener('click', () => {
+      demoCompleteOverlay.classList.remove('active');
+      intro.classList.remove('hidden');
+      demoLabel.style.display = 'none';
+      isDemo = false;
     });
 
     function startDemo() {
@@ -651,10 +749,8 @@
       
       setTimeout(() => {
         if (isDemo) {
-          alert(`Demo Complete! Now try the real game.`);
-          intro.classList.remove('hidden');
-          demoLabel.style.display = 'none';
-          isDemo = false;
+          demoCompleteScore.textContent = score;
+          demoCompleteOverlay.classList.add('active');
         } else {
           alert(`Game Complete! Your Final Score: ${score}/${MAX_SCORE}`);
           intro.classList.remove('hidden');
