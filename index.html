@@ -327,6 +327,18 @@
       opacity: 0.7;
     }
 
+    .demo-label {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(59, 130, 246, 0.8);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 35;
+    }
+
     @media (min-width: 900px) {
       body {
         padding: 40px;
@@ -374,6 +386,8 @@
   <div class="app-shell">
 
     <div class="flash" id="flash"></div>
+
+    <div class="demo-label" id="demoLabel" style="display: none;">DEMO MODE</div>
 
     <div class="countdown-overlay" id="countdownOverlay">
       <div class="countdown-number" id="countdownNumber">3</div>
@@ -455,6 +469,7 @@
     const playTutorial = document.getElementById('playTutorial');
     const countdownOverlay = document.getElementById('countdownOverlay');
     const countdownNumber = document.getElementById('countdownNumber');
+    const demoLabel = document.getElementById('demoLabel');
 
     let currentAnswer = '';
     let score = 0;
@@ -464,6 +479,7 @@
     const MAX_SCORE = 100;
     let gameActive = true;
     let isDemo = false;
+    let demoTimeout = null;
 
     playTutorial.addEventListener('click', () => {
       startDemo();
@@ -480,6 +496,7 @@
       gameActive = true;
       updateScore();
       updateRound();
+      demoLabel.style.display = 'block';
       intro.classList.add('hidden');
       nextRound();
     }
@@ -497,6 +514,7 @@
           countdownOverlay.classList.remove('active');
           intro.classList.add('hidden');
           isDemo = false;
+          demoLabel.style.display = 'none';
           startGame();
         }
       }, 1000);
@@ -557,7 +575,7 @@
       // Auto-play demo
       if (isDemo) {
         disableAllButtons();
-        setTimeout(() => {
+        demoTimeout = setTimeout(() => {
           const correctButton = [...choicesContainer.querySelectorAll('.choice')].find(
             btn => btn.textContent === currentAnswer
           );
@@ -629,10 +647,13 @@
 
     function endGame() {
       gameActive = false;
+      clearTimeout(demoTimeout);
+      
       setTimeout(() => {
         if (isDemo) {
           alert(`Demo Complete! Now try the real game.`);
           intro.classList.remove('hidden');
+          demoLabel.style.display = 'none';
           isDemo = false;
         } else {
           alert(`Game Complete! Your Final Score: ${score}/${MAX_SCORE}`);
