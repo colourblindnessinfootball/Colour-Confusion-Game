@@ -327,18 +327,6 @@
       opacity: 0.7;
     }
 
-    .demo-label {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(59, 130, 246, 0.8);
-      padding: 8px 16px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      z-index: 35;
-    }
-
     .demo-complete-overlay {
       position: absolute;
       inset: 0;
@@ -469,14 +457,13 @@
 
     <div class="flash" id="flash"></div>
 
-    <div class="demo-label" id="demoLabel" style="display: none;">DEMO MODE</div>
-
     <div class="countdown-overlay" id="countdownOverlay">
       <div class="countdown-number" id="countdownNumber">3</div>
     </div>
 
     <div class="demo-complete-overlay" id="demoCompleteOverlay">
       <div class="demo-complete-score" id="demoCompleteScore">100</div>
+      <span class="demo-complete-score" style="font-size: 32px; background: none; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 10px;">/100</span>
       <div class="demo-complete-text">What score did you get?</div>
       <button class="demo-complete-button" id="demoCompleteButton">Try It Out!</button>
     </div>
@@ -557,7 +544,6 @@
     const playTutorial = document.getElementById('playTutorial');
     const countdownOverlay = document.getElementById('countdownOverlay');
     const countdownNumber = document.getElementById('countdownNumber');
-    const demoLabel = document.getElementById('demoLabel');
     const demoCompleteOverlay = document.getElementById('demoCompleteOverlay');
     const demoCompleteScore = document.getElementById('demoCompleteScore');
     const demoCompleteButton = document.getElementById('demoCompleteButton');
@@ -583,7 +569,6 @@
     demoCompleteButton.addEventListener('click', () => {
       demoCompleteOverlay.classList.remove('active');
       intro.classList.remove('hidden');
-      demoLabel.style.display = 'none';
       isDemo = false;
     });
 
@@ -594,7 +579,6 @@
       gameActive = true;
       updateScore();
       updateRound();
-      demoLabel.style.display = 'block';
       intro.classList.add('hidden');
       nextRound();
     }
@@ -612,7 +596,6 @@
           countdownOverlay.classList.remove('active');
           intro.classList.add('hidden');
           isDemo = false;
-          demoLabel.style.display = 'none';
           startGame();
         }
       }, 1000);
